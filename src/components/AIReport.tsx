@@ -75,7 +75,12 @@ CẤU TRÚC BÁO CÁO YÊU CẦU (Hãy viết theo đúng format này):
 
       setReport(response.text || 'Không thể tạo báo cáo.');
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi gọi Gemini API.');
+      const errorMessage = err.message || '';
+      if (errorMessage.includes('leaked') || errorMessage.includes('PERMISSION_DENIED')) {
+        setError('Mã API Key của bạn đã bị Google khóa vì phát hiện bị lộ (có thể do bạn đã dán nó vào khung chat hoặc nơi công khai). Vui lòng vào https://aistudio.google.com/app/apikey tạo một mã MỚI HOÀN TOÀN, sau đó dán vào biến CUSTOM_GEMINI_API_KEY trong phần Settings > Secrets (Tuyệt đối không dán vào khung chat nữa).');
+      } else {
+        setError(errorMessage || 'Có lỗi xảy ra khi gọi Gemini API.');
+      }
     } finally {
       setLoading(false);
     }
