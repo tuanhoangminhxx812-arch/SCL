@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { SummaryData } from '../types';
 import { GoogleGenAI } from '@google/genai';
-import { Bot, Loader2, RefreshCw, Key } from 'lucide-react';
+import { Bot, Loader2, RefreshCw, Key, Download } from 'lucide-react';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface AIReportProps {
   summary: SummaryData;
@@ -18,32 +19,47 @@ export function AIReport({ summary }: AIReportProps) {
     setError('');
     
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey || apiKey === 'undefined' || apiKey === '""') {
-        throw new Error('Chưa cấu hình Gemini API Key. Vui lòng thêm API Key trong phần Settings/Secrets của AI Studio.');
-      }
-
-      const ai = new GoogleGenAI({ AIzaSyBmRE_iYNs4BHzsOTDNYYfo6oH8Qf1a0Oc });
+      // Đã sửa lại cú pháp truyền API Key
+      const ai = new GoogleGenAI({ apiKey: 'AIzaSyBmRE_iYNs4BHzsOTDNYYfo6oH8Qf1a0Oc' });
       
       const prompt = `
-Bạn là một Kế Toán Trưởng dày dạn kinh nghiệm. Hãy viết một báo cáo phân tích tình hình thực hiện các công trình sửa chữa lớn gửi cho Ban Giám Đốc dựa trên số liệu sau:
+Bạn là một Kế Toán Trưởng dày dạn kinh nghiệm. Hãy viết một báo cáo phân tích tình hình thực hiện các công trình sửa chữa lớn gửi cho Ban Giám Đốc dựa trên số liệu sau.
 
-- Tổng Giá trị Khái toán: ${summary.totalEstimated.toLocaleString()} VND
-- Tổng Giá trị Thực hiện: ${summary.totalExecuted.toLocaleString()} VND
-- Tổng Giá trị Quyết toán: ${summary.totalSettlement.toLocaleString()} VND
+YÊU CẦU BẮT BUỘC:
+1. Văn phong doanh nghiệp trang trọng, chuyên nghiệp, khách quan.
+2. TUYỆT ĐỐI KHÔNG sai lỗi chính tả, ngữ pháp tiếng Việt.
+3. BẮT BUỘC sử dụng BẢNG (Markdown Table) để trình bày số liệu cho rõ ràng, trực quan.
+4. Bố cục chia phần rõ ràng theo đúng cấu trúc bên dưới.
 
-Cơ cấu Khái toán theo Hạng mục:
-${Object.entries(summary.estimatedByCategory).map(([k, v]) => `- ${k}: ${v.toLocaleString()} VND`).join('\n')}
+SỐ LIỆU ĐẦU VÀO:
+- Tổng Giá trị Khái toán: ${summary.totalEstimated.toLocaleString('vi-VN')} VNĐ
+- Tổng Giá trị Thực hiện: ${summary.totalExecuted.toLocaleString('vi-VN')} VNĐ
+- Tổng Giá trị Quyết toán: ${summary.totalSettlement.toLocaleString('vi-VN')} VNĐ
+
+Dữ liệu theo Hạng mục (Khái toán):
+${Object.entries(summary.estimatedByCategory).map(([k, v]) => `- ${k}: ${v.toLocaleString('vi-VN')} VNĐ`).join('\n')}
 
 Tình trạng Công trình:
 ${Object.entries(summary.countByStatus).map(([k, v]) => `- ${k}: ${v} công trình`).join('\n')}
 
-Yêu cầu báo cáo:
-1. Nhận xét tổng quan về tiến độ giải ngân và thực hiện các công trình sửa chữa lớn.
-2. Phân tích các hạng mục chiếm tỷ trọng vốn lớn.
-3. Đánh giá rủi ro về tiến độ (dựa trên trạng thái công trình) và chênh lệch giữa khái toán - thực hiện.
-4. Đề xuất hành động cho tháng tới để đẩy nhanh tiến độ quyết toán.
-Sử dụng format Markdown để trình bày đẹp mắt, chuyên nghiệp.
+CẤU TRÚC BÁO CÁO YÊU CẦU (Hãy viết theo đúng format này):
+
+# BÁO CÁO TÌNH HÌNH THỰC HIỆN CÔNG TRÌNH SỬA CHỮA LỚN
+**Kính gửi:** Ban Giám Đốc
+**Người lập:** Kế Toán Trưởng
+
+## I. TỔNG QUAN TÀI CHÍNH
+[Tạo 1 bảng Markdown thể hiện 4 cột: Chỉ tiêu, Giá trị (VNĐ), Tỷ lệ % Thực hiện/Khái toán, Tỷ lệ % Quyết toán/Khái toán. Thêm nhận xét ngắn gọn dưới bảng về tiến độ giải ngân tổng thể]
+
+## II. PHÂN TÍCH THEO HẠNG MỤC & TRẠNG THÁI
+[Tạo 1 bảng Markdown liệt kê các hạng mục và giá trị khái toán tương ứng, sắp xếp từ cao xuống thấp]
+[Nhận xét về các hạng mục chiếm tỷ trọng vốn lớn nhất]
+[Tạo 1 bảng Markdown thống kê số lượng công trình theo từng trạng thái (Đang thi công, Lập kế hoạch...)]
+[Nhận xét về tình trạng chung của các công trình]
+
+## III. ĐÁNH GIÁ RỦI RO & ĐỀ XUẤT
+[Chỉ ra các điểm nghẽn, rủi ro chậm tiến độ hoặc vượt dự toán nếu có dựa trên số liệu]
+[Gạch đầu dòng các đề xuất hành động cụ thể cho tháng tới để đẩy nhanh tiến độ và tối ưu chi phí]
 `;
 
       const response = await ai.models.generateContent({
@@ -59,6 +75,45 @@ Sử dụng format Markdown để trình bày đẹp mắt, chuyên nghiệp.
     }
   };
 
+  const exportToWord = () => {
+    const content = document.getElementById('report-content')?.innerHTML;
+    if (!content) return;
+
+    const header = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Báo Cáo Phân Tích</title>
+        <style>
+          body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          th, td { border: 1px solid #000000; padding: 8px; text-align: left; vertical-align: middle; }
+          th { background-color: #f2f2f2; font-weight: bold; }
+          h1 { font-size: 16pt; color: #1e3a8a; text-align: center; text-transform: uppercase; margin-bottom: 20px; }
+          h2 { font-size: 14pt; color: #1e3a8a; margin-top: 20px; margin-bottom: 10px; }
+          p { margin-bottom: 10px; }
+          ul { margin-bottom: 10px; }
+          li { margin-bottom: 5px; }
+        </style>
+      </head>
+      <body>
+    `;
+    const footer = "</body></html>";
+    const sourceHTML = header + content + footer;
+
+    const blob = new Blob(['\ufeff', sourceHTML], {
+      type: 'application/msword'
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Bao_Cao_Phan_Tich_Cong_Trinh.doc';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <header className="flex justify-between items-center">
@@ -66,18 +121,29 @@ Sử dụng format Markdown để trình bày đẹp mắt, chuyên nghiệp.
           <h2 className="text-[24px] font-bold text-[#1e3a8a]">Báo Cáo Phân Tích AI</h2>
           <p className="text-[13px] text-[#64748b]">Tự động phân tích bởi Kế Toán Trưởng AI</p>
         </div>
-        <button
-          onClick={generateReport}
-          disabled={loading || summary.totalEstimated === 0}
-          className="bg-[#3b82f6] text-white border-none px-5 py-2.5 rounded-md font-semibold cursor-pointer flex items-center gap-2 hover:bg-blue-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
+        <div className="flex gap-3">
+          {report && (
+            <button
+              onClick={exportToWord}
+              className="bg-white text-[#1e3a8a] border border-[#1e3a8a] px-5 py-2.5 rounded-md font-semibold cursor-pointer flex items-center gap-2 hover:bg-[#f8fafc] transition-colors text-sm"
+            >
+              <Download className="w-4 h-4" />
+              XUẤT WORD
+            </button>
           )}
-          {report ? 'TẠO LẠI BÁO CÁO' : 'TẠO BÁO CÁO'}
-        </button>
+          <button
+            onClick={generateReport}
+            disabled={loading || summary.totalEstimated === 0}
+            className="bg-[#3b82f6] text-white border-none px-5 py-2.5 rounded-md font-semibold cursor-pointer flex items-center gap-2 hover:bg-blue-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            {report ? 'TẠO LẠI BÁO CÁO' : 'TẠO BÁO CÁO'}
+          </button>
+        </div>
       </header>
 
       <section className="bg-white rounded-lg border border-[#e2e8f0] flex flex-col overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
@@ -102,8 +168,8 @@ Sử dụng format Markdown để trình bày đẹp mắt, chuyên nghiệp.
             </div>
           ) : report ? (
             <div className="prose prose-sm max-w-none text-[#1e293b]">
-              <div className="markdown-body">
-                <Markdown>{report}</Markdown>
+              <div id="report-content" className="markdown-body">
+                <Markdown remarkPlugins={[remarkGfm]}>{report}</Markdown>
               </div>
             </div>
           ) : (
