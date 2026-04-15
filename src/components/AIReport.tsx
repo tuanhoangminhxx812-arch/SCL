@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { SummaryData } from '../types';
 import { GoogleGenAI } from '@google/genai';
-import { Bot, Loader2, RefreshCw } from 'lucide-react';
+import { Bot, Loader2, RefreshCw, Key } from 'lucide-react';
 import Markdown from 'react-markdown';
 
 interface AIReportProps {
@@ -18,7 +18,12 @@ export function AIReport({ summary }: AIReportProps) {
     setError('');
     
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey || apiKey === 'undefined' || apiKey === '""') {
+        throw new Error('Chưa cấu hình Gemini API Key. Vui lòng thêm API Key trong phần Settings/Secrets của AI Studio.');
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       
       const prompt = `
 Bạn là một Kế Toán Trưởng dày dạn kinh nghiệm. Hãy viết một báo cáo phân tích tình hình thực hiện các công trình sửa chữa lớn gửi cho Ban Giám Đốc dựa trên số liệu sau:
@@ -82,8 +87,12 @@ Sử dụng format Markdown để trình bày đẹp mắt, chuyên nghiệp.
         </div>
         <div className="p-6 flex-1">
           {error && (
-            <div className="mb-4 p-3 bg-[#ef4444]/10 text-[#ef4444] rounded border border-[#ef4444]/20 text-[13px]">
-              {error}
+            <div className="mb-4 p-4 bg-[#ef4444]/10 text-[#ef4444] rounded border border-[#ef4444]/20 text-[13px] flex items-start gap-3">
+              <Key className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div>
+                <strong className="block mb-1 text-[14px]">Lỗi xác thực API Key</strong>
+                {error}
+              </div>
             </div>
           )}
 
