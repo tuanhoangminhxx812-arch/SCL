@@ -19,8 +19,14 @@ export function AIReport({ summary }: AIReportProps) {
     setError('');
     
     try {
-      // Đã sửa lại cú pháp truyền API Key
-      const ai = new GoogleGenAI({ apiKey: 'AIzaSyBmRE_iYNs4BHzsOTDNYYfo6oH8Qf1a0Oc' });
+      // Ưu tiên dùng CUSTOM_GEMINI_API_KEY nếu có, nếu không thì fallback về GEMINI_API_KEY mặc định
+      const apiKey = process.env.CUSTOM_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+      
+      if (!apiKey || apiKey === 'undefined' || apiKey === '""' || apiKey.includes('AIzaSyBmRE')) {
+        throw new Error('Chưa cấu hình Gemini API Key. Vui lòng thêm biến CUSTOM_GEMINI_API_KEY trong phần Settings > Secrets.');
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       
       const prompt = `
 Bạn là một Kế Toán Trưởng dày dạn kinh nghiệm. Hãy viết một báo cáo phân tích tình hình thực hiện các công trình sửa chữa lớn gửi cho Ban Giám Đốc dựa trên số liệu sau.
