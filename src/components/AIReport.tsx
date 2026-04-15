@@ -23,7 +23,7 @@ export function AIReport({ summary }: AIReportProps) {
         throw new Error('Chưa cấu hình Gemini API Key. Vui lòng thêm API Key trong phần Settings/Secrets của AI Studio.');
       }
 
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({ AIzaSyBmRE_iYNs4BHzsOTDNYYfo6oH8Qf1a0Oc });
       
       const prompt = `
 Bạn là một Kế Toán Trưởng dày dạn kinh nghiệm. Hãy viết một báo cáo phân tích tình hình thực hiện các công trình sửa chữa lớn gửi cho Ban Giám Đốc dựa trên số liệu sau:
