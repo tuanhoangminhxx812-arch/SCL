@@ -29,43 +29,28 @@ export function AIReport({ summary }: AIReportProps) {
       const ai = new GoogleGenAI({ apiKey });
       
       const prompt = `
-Bạn là một Kế Toán Trưởng dày dạn kinh nghiệm. Hãy viết một báo cáo phân tích tình hình thực hiện các công trình sửa chữa lớn gửi cho Ban Giám Đốc dựa trên số liệu sau.
+Bạn là Kế Toán Trưởng. Hãy viết một BÁO CÁO NHANH, NGẮN GỌN, SÚC TÍCH gửi Ban Giám Đốc về tình hình công trình sửa chữa lớn.
+Tiêu chí: Đọc nhanh trong 1 phút, tập trung vào số liệu cốt lõi và hành động. Tối đa 250-300 chữ.
 
-YÊU CẦU BẮT BUỘC:
-1. Văn phong doanh nghiệp trang trọng, chuyên nghiệp, khách quan.
-2. TUYỆT ĐỐI KHÔNG sai lỗi chính tả, ngữ pháp tiếng Việt.
-3. BẮT BUỘC sử dụng BẢNG (Markdown Table) để trình bày số liệu cho rõ ràng, trực quan.
-4. Bố cục chia phần rõ ràng theo đúng cấu trúc bên dưới.
+SỐ LIỆU TỔNG HỢP:
+- Khái toán: ${summary.totalEstimated.toLocaleString('vi-VN')} VNĐ
+- Thực hiện: ${summary.totalExecuted.toLocaleString('vi-VN')} VNĐ
+- Quyết toán: ${summary.totalSettlement.toLocaleString('vi-VN')} VNĐ
+- Trạng thái: ${Object.entries(summary.countByStatus).map(([k, v]) => `${k} (${v})`).join(', ')}
+- Hạng mục chính: ${Object.entries(summary.estimatedByCategory).slice(0, 3).map(([k, v]) => `${k}`).join(', ')}...
 
-SỐ LIỆU ĐẦU VÀO:
-- Tổng Giá trị Khái toán: ${summary.totalEstimated.toLocaleString('vi-VN')} VNĐ
-- Tổng Giá trị Thực hiện: ${summary.totalExecuted.toLocaleString('vi-VN')} VNĐ
-- Tổng Giá trị Quyết toán: ${summary.totalSettlement.toLocaleString('vi-VN')} VNĐ
+YÊU CẦU BỐ CỤC (Sử dụng Markdown):
 
-Dữ liệu theo Hạng mục (Khái toán):
-${Object.entries(summary.estimatedByCategory).map(([k, v]) => `- ${k}: ${v.toLocaleString('vi-VN')} VNĐ`).join('\n')}
+# BÁO CÁO NHANH: TÌNH HÌNH SỬA CHỮA LỚN
 
-Tình trạng Công trình:
-${Object.entries(summary.countByStatus).map(([k, v]) => `- ${k}: ${v} công trình`).join('\n')}
+**1. TỔNG QUAN TÀI CHÍNH**
+[Tạo 1 bảng nhỏ 3 dòng: Chỉ tiêu (Khái toán, Thực hiện, Quyết toán), Giá trị (VNĐ), Tỷ lệ % so với Khái toán]
 
-CẤU TRÚC BÁO CÁO YÊU CẦU (Hãy viết theo đúng format này):
+**2. ĐIỂM NÓNG & RỦI RO**
+- [Gạch đầu dòng 1-2 rủi ro lớn nhất về tiến độ hoặc chi phí dựa trên số liệu trạng thái]
 
-# BÁO CÁO TÌNH HÌNH THỰC HIỆN CÔNG TRÌNH SỬA CHỮA LỚN
-**Kính gửi:** Ban Giám Đốc
-**Người lập:** Kế Toán Trưởng
-
-## I. TỔNG QUAN TÀI CHÍNH
-[Tạo 1 bảng Markdown thể hiện 4 cột: Chỉ tiêu, Giá trị (VNĐ), Tỷ lệ % Thực hiện/Khái toán, Tỷ lệ % Quyết toán/Khái toán. Thêm nhận xét ngắn gọn dưới bảng về tiến độ giải ngân tổng thể]
-
-## II. PHÂN TÍCH THEO HẠNG MỤC & TRẠNG THÁI
-[Tạo 1 bảng Markdown liệt kê các hạng mục và giá trị khái toán tương ứng, sắp xếp từ cao xuống thấp]
-[Nhận xét về các hạng mục chiếm tỷ trọng vốn lớn nhất]
-[Tạo 1 bảng Markdown thống kê số lượng công trình theo từng trạng thái (Đang thi công, Lập kế hoạch...)]
-[Nhận xét về tình trạng chung của các công trình]
-
-## III. ĐÁNH GIÁ RỦI RO & ĐỀ XUẤT
-[Chỉ ra các điểm nghẽn, rủi ro chậm tiến độ hoặc vượt dự toán nếu có dựa trên số liệu]
-[Gạch đầu dòng các đề xuất hành động cụ thể cho tháng tới để đẩy nhanh tiến độ và tối ưu chi phí]
+**3. KIẾN NGHỊ CHỈ ĐẠO**
+- [Gạch đầu dòng 2-3 hành động cụ thể, ngắn gọn cần Ban Giám Đốc phê duyệt/chỉ đạo ngay]
 `;
 
       const response = await ai.models.generateContent({
